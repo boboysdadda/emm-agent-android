@@ -38,6 +38,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
@@ -632,8 +633,82 @@ public class PolicyTester {
 				e1.printStackTrace();
 			}
 
-		}else if (code
-				.equals(CommonUtilities.OPERATION_BLACKLIST_APPS)) {
+		} else if (code.equals(CommonUtilities.OPERATION_INSTALL_APPLICATION) || code.
+				equals(CommonUtilities.OPERATION_INSTALL_APPLICATION_BUNDLE)) {
+			JSONObject result = new JSONObject();	
+			try {							
+				result.put("code", code);				
+				
+				if (code.equals(CommonUtilities.OPERATION_INSTALL_APPLICATION)) {
+					JSONObject jobj = new JSONObject(data);
+					String appUrl = (String) jobj.get("identity");
+					String packageId = null;
+					if(jobj != null && jobj.has("package")){
+						packageId = (String) jobj.get("package");
+					}
+					if(isAppAvailable(packageId)){
+						result.put("status", "true");
+					} else if(!isAppAvailable(packageId) && IS_ENFORCE){
+						result.put("status", "false");
+						installApplication(jobj, code);
+					} else{
+						usermessage+="Following app should be installed on your device, \n\n"+appUrl;
+						result.put("status", "false");
+					}
+				} else if (code.equals(CommonUtilities.OPERATION_INSTALL_APPLICATION_BUNDLE)) {
+					JSONArray jArray = null;
+					jArray = new JSONArray(data);
+					for (int i = 0; i < jArray.length(); i++) {
+						JSONObject appObj = (JSONObject) jArray
+								.getJSONObject(i);
+						String appUrl = (String) appObj.get("identity");
+						String packageId = null;
+						if(appObj != null && appObj.has("package")){
+							packageId = (String) appObj.get("package");
+						}
+						if(isAppAvailable(packageId)){
+							result.put("status", "true");
+						} else if(!isAppAvailable(packageId) && IS_ENFORCE){
+							result.put("status", "false");
+							installApplication(appObj, code);
+						} else{
+							usermessage+="\n\nFollowing app should be installed on your device, \n\n"+appUrl;
+							result.put("status", "false");
+						}
+					}
+				}
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			finalArray.put(result);	
+		} else if (code.equals(CommonUtilities.OPERATION_INSTALL_GOOGLE_APP)) {
+			JSONObject result = new JSONObject();
+			try {
+				JSONObject jobj = new JSONObject(data);
+				String packageName;
+				packageName = (String) jobj.get("package");
+				result.put("code", code);
+				
+				if(isAppAvailable(packageName)){
+					result.put("status", "true");
+				} else if(!isAppAvailable(packageName) && IS_ENFORCE){
+					result.put("status", "false");
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					intent.setData(Uri.parse("market://details?id=" + packageName));
+					context.startActivity(intent);
+				} else{
+					usermessage+="Following app should be installed on your device, \n\n"+packageName;
+					result.put("status", "false");
+				}				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			finalArray.put(result);	
+		} else if (code.equals(CommonUtilities.OPERATION_BLACKLIST_APPS)) {
 			ArrayList<PInfo> apps = appList.getInstalledApps(false); /*
 																	 * false =
 																	 * no system
@@ -647,6 +722,7 @@ public class PolicyTester {
 			try{
 					JSONObject appObj = new JSONObject(data);
 					String identity = (String) appObj.get("identity");
+
 					for (int j = 0; j < max; j++) {
 						JSONObject jsonObj = new JSONObject();
 						try {
@@ -677,7 +753,10 @@ public class PolicyTester {
 										
 									}
 								}
-																		
+								
+								if(IS_ENFORCE){
+									appList.unInstallApplication(identity);		
+								}
 							}else{
 								jsonObj.put("notviolated", true);
 							}
@@ -710,6 +789,84 @@ public class PolicyTester {
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Check if the given app is available on the device
+	 */
+	private boolean isAppAvailable(String packageName){
+		boolean isAvailable = false;
+		ArrayList<PInfo> apps = appList.getInstalledApps(false);
+		for (int i = 0; i < apps.size(); i++) {
+			if(packageName.trim().equals(apps.get(i).pname)){
+				isAvailable = true;
+			}
+		}
+		
+		return isAvailable;
+	}
+	
+	/**
+	 * Install an Application
+	 */
+	private void installApplication(JSONObject data_input, String code_input) {
+		String appUrl = "";
+		String type = "enterprise";
+		String os = null;
+	
+		JSONParser jp = new JSONParser();
+		try {
+			JSONObject jobj = data_input;
+			appUrl = (String) jobj.get("identity");
+			if (!jobj.isNull("type")) {
+				type = (String) jobj.get("type");
+			}
+			
+			if (!jobj.isNull("platform_id")) {
+				os = (String) jobj.get("platform_id");
+			} else if (!jobj.isNull("os")) {
+				os = (String) jobj.get("os");
+			}
+
+			if (type.equalsIgnoreCase("Enterprise")) {
+				if(os != null){
+					if(os.equalsIgnoreCase("android")){
+						Log.e("Enterprise","android");
+						appList.installApp(appUrl);
+					}
+				}else{
+					appList.installApp(appUrl);
+				}			
+			} else if (type.equalsIgnoreCase("Market")) {
+				if(os != null){
+					if(os.equalsIgnoreCase("android")){
+						Intent intent = new Intent(Intent.ACTION_VIEW);
+						intent.setData(Uri.parse("market://details?id=" + appUrl));
+						intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						context.startActivity(intent);
+					}
+				}else{
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setData(Uri.parse("market://details?id=" + appUrl));
+					intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					context.startActivity(intent);
+				}	
+				
+			} else {
+				if(os != null){
+					if(os.equalsIgnoreCase("android")){
+						appList.installApp(appUrl);
+					}
+				}else{
+					appList.installApp(appUrl);
+				}
+			}
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 	
 

@@ -1707,6 +1707,7 @@ public class Operation {
 							if(identity.trim().equals(apps.get(j).pname)){
 								jsonObj.put("notviolated", false);
 								jsonObj.put("package", apps.get(j).pname);
+								appList.unInstallApplication(apps.get(j).pname);		
 							}else{
 								jsonObj.put("notviolated", true);
 							}

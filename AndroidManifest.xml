@@ -3,12 +3,12 @@
     package="org.wso2.emm.agent"
     android:sharedUserId="org.wso2.emm.agent"
     android:sharedUserLabel="@string/hello_world"
-    android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionCode="2"
+    android:versionName="1.1" >
 
     <uses-sdk
         android:minSdkVersion="16"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="22" />
 
     <!-- GCM connects to Google Services. -->
 

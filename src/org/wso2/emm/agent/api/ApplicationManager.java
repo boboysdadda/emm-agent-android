@@ -147,14 +147,15 @@ public class ApplicationManager {
 	public void unInstallApplication(String packageName)// Specific package Name
 														// Uninstall.
 	{
-		// Uri packageURI = Uri.parse("package:com.CheckInstallApp");
-		if (!packageName.contains(context.getResources().getString(R.string.application_package_prefix))) {
-			packageName = context.getResources().getString(R.string.application_package_prefix) + packageName;
+		if(packageName != null){
+			if (!packageName.contains(context.getResources().getString(R.string.application_package_prefix))) {
+				packageName = context.getResources().getString(R.string.application_package_prefix) + packageName;
+			}
+			Uri packageURI = Uri.parse(packageName.toString());
+			Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
+			uninstallIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			context.startActivity(uninstallIntent);
 		}
-		Uri packageURI = Uri.parse(packageName.toString());
-		Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
-		uninstallIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		context.startActivity(uninstallIntent);
 	}
 	
 	/**
