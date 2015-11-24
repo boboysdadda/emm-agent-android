@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -83,7 +85,14 @@ public class HTTPConnectorUtils {
 		Map<String, String> response = new HashMap<String, String>();
 		
 		params.put("username", username);
-		params.put("password", password);
+		String encodedPassword = password;
+		try {
+			encodedPassword = URLEncoder.encode(password, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			String msg = "error occurred while encoding password.";
+			Log.e(TAG, msg, e);
+		}
+		params.put("password", encodedPassword);
 		
 		try {
 			response = sendWithTimeWait("devices/clientkey", params,
