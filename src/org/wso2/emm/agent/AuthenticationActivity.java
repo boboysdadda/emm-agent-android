@@ -15,6 +15,8 @@
  */
 package org.wso2.emm.agent;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -451,10 +453,7 @@ public class AuthenticationActivity extends SherlockActivity implements
 			protected void onPreExecute() {
 				progressDialog = ProgressDialog.show(AuthenticationActivity.this,
 						getResources().getString(R.string.dialog_authenticate),
-						getResources().getString(R.string.dialog_please_wait), true);
-				
-				
-				
+						getResources().getString(R.string.dialog_please_wait), true);			
 			};
 
 			@Override
@@ -561,22 +560,32 @@ public class AuthenticationActivity extends SherlockActivity implements
 			usernameForRegister = username.getText().toString().trim() + "@"
 					+ txtDomain.getText().toString().trim();
 			
-			IdentityProxy.getInstance().init(
-					clientKey,
-					clientSecret,
-					usernameForRegister,
-					password.getText().toString().trim(),
-					serverURL,
-					AuthenticationActivity.this,this.getApplicationContext());
+			try {
+				IdentityProxy.getInstance().init(
+						clientKey,
+						clientSecret,
+						usernameForRegister,
+						URLEncoder.encode(password.getText().toString().trim(), "UTF-8"),
+						serverURL,
+						AuthenticationActivity.this,this.getApplicationContext());
+			} catch (UnsupportedEncodingException e) {
+				String msg = "error occurred while encoding password.";
+				Log.e(TAG, msg, e);
+			}
 
 		} else {
 			usernameForRegister = username.getText().toString().trim();
 			
-			IdentityProxy.getInstance().init(clientKey,
-					clientSecret,
-					usernameForRegister,
-					password.getText().toString().trim(), serverURL,
-					AuthenticationActivity.this,this.getApplicationContext());
+			try {
+				IdentityProxy.getInstance().init(clientKey,
+						clientSecret,
+						usernameForRegister,
+						URLEncoder.encode(password.getText().toString().trim(), "UTF-8"), serverURL,
+						AuthenticationActivity.this,this.getApplicationContext());
+			} catch (UnsupportedEncodingException e) {
+				String msg = "error occurred while encoding password.";
+				Log.e(TAG, msg, e);
+			}
 		}
 	}
 
