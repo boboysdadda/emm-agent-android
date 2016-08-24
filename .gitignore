@@ -215,18 +215,3 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-
-#################
-## Idea
-#################
-.idea/ 
-*.iml
-
-#################
-## emm-agent-android
-#################
-plugins/ActionBarSherlock/library/bin/
-plugins/ActionBarSherlock/library/gen/
-lint.xml
-project.properties
-.classpath
